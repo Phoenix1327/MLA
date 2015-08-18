@@ -2,11 +2,8 @@
 # -*- coding: utf-8 -*-
 
 __author__ = 'Administrator'
-import numpy as np
-import operator
-import matplotlib
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
+
+from kNN import *
 
 def createDataSet():
     group = np.array([[1.0,1.1],[1.0,1.0],[0,0],[0,0.1]])
@@ -20,6 +17,7 @@ def classify0(inX, dataSet, labels, k):
     sqDiffMat = diffMat**2
     sqDistances = sqDiffMat.sum(axis=1)#dataSetSize * 1
     distances = sqDistances**0.5
+
     sortedDistIndicies = distances.argsort(axis=None)
 
     classCount = {}
@@ -104,7 +102,50 @@ def datingClassTest(k, hoRatio, datingDataMat, datingLabels):
             errorCount += 1
     print("the total error rate is: %0.2f%%" % (errorCount/float(numTestVecs)*100))
 
+def img2vector(filename):
+    fr = open(filename)
+    dataLines = fr.readlines()
+    datastr = ''
+    for line in dataLines:
+        datastr += line.strip()
+    datalist = list(datastr)
+    datalist = list(map(int, datalist))
 
-mat, labelvector = file2matrix('datingTestSet.txt')
-datingClassTest(3, 0.1, mat, labelvector)
-plt3DData(mat, labelvector)
+    return np.asarray(datalist).reshape(1,len(datalist))
+
+def handwritingClassTest(datapath, k=3):
+    hwLabels = []
+    abspath = os.path.abspath('.')
+    trainData_dirname = 'trainingDigits'
+    testData_dirname = 'testDigits'
+    trainfilepath = os.path.join(datapath, trainData_dirname)
+    trainingFileList = os.listdir(trainfilepath)
+    size = len(trainingFileList)
+    trainingMat = np.zeros((size,1024))
+    for i in range(size):
+        fileNameStr = trainingFileList[i]
+        classNumstr = int(fileNameStr.split('_')[0])
+        hwLabels.append(classNumstr)
+        trainingMat[i,:] = img2vector(os.path.join(trainfilepath, fileNameStr))
+
+    testfilepath = os.path.join(datapath, testData_dirname)
+    testFileList = os.listdir(testfilepath)
+    errorCount = 0.0
+    sizeTest = len(testFileList)
+    for i in range(sizeTest):
+        fileNameStr = testFileList[i]
+        classNumstr = int(fileNameStr.split('_')[0])
+        vecUnderTest = img2vector(os.path.join(testfilepath, fileNameStr))
+        Result = classify0(vecUnderTest, trainingMat, hwLabels, k)
+        print('the classfier came back with: %d, the real answer is: %d'\
+              % (Result, classNumstr))
+        if not Result == classNumstr:
+            errorCount += 1.0
+
+    print("the total error rate is: %0.2f%%" % (errorCount/float(sizeTest)*100))
+
+
+
+
+
+
